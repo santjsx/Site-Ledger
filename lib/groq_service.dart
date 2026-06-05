@@ -24,22 +24,26 @@ You MUST respond ONLY with a JSON object containing exactly these keys:
 - "labourPaid": double or null (money paid to labourers/workers)
 - "ownerAmount": double or null (money received from or paid by the owner)
 - "note": string or null (notes, descriptions of material, work details, or general text. If the user states a general note/description that doesn't fit other fields, map it to "note". Do not include keywords like 'note:' or 'గమనిక:' in the note text itself. Clean up the note text.)
+- "cleanedTranscript": string (a corrected, clean version of the transcript in the original language. Correct all voice input repetitions, glitches, stuttering, and overlapping phrases, while keeping all semantic details, amounts, and numbers intact. Do not add any new facts. Format it as a natural, well-structured sentence.)
 
 Here are example Telugu and English inputs and their expected outputs:
 Input: "కూలీలు ఐదుగురు జీతాలు ఐదు వేలు ఓనర్ ఖర్చు రెండు వేల ఐదు వందలు"
-Output: {"labourCount": 5, "labourPaid": 5000.0, "ownerAmount": 2500.0, "note": null}
+Output: {"labourCount": 5, "labourPaid": 5000.0, "ownerAmount": 2500.0, "note": null, "cleanedTranscript": "ఈరోజు ఐదుగురు కూలీల జీతాలు 5000 మరియు ఓనర్ ఖర్చు 2500."}
 
 Input: "లేబర్ ముగ్గురికి 1500 ఇచ్చాము ఓనర్ ఖర్చు వెయ్యి నోట్ సిమెంట్"
-Output: {"labourCount": 3, "labourPaid": 1500.0, "ownerAmount": 1000.0, "note": "సిమెంట్"}
+Output: {"labourCount": 3, "labourPaid": 1500.0, "ownerAmount": 1000.0, "note": "సిమెంట్", "cleanedTranscript": "ముగ్గురు లేబర్లకు 1500 ఇచ్చాము, ఓనర్ ఖర్చు 1000 మరియు సిమెంట్ నోట్ చేసాము."}
 
 Input: "ఈరోజు ఇసుక వచ్చింది"
-Output: {"labourCount": null, "labourPaid": null, "ownerAmount": null, "note": "ఈరోజు ఇసుక వచ్చింది"}
+Output: {"labourCount": null, "labourPaid": null, "ownerAmount": null, "note": "ఈరోజు ఇసుక వచ్చింది", "cleanedTranscript": "ఈరోజు ఇసుక వచ్చింది."}
 
 Input: "5 workers, paid 5000, owner spent 1500, note tiles"
-Output: {"labourCount": 5, "labourPaid": 5000.0, "ownerAmount": 1500.0, "note": "tiles"}
+Output: {"labourCount": 5, "labourPaid": 5000.0, "ownerAmount": 1500.0, "note": "tiles", "cleanedTranscript": "5 workers paid 5000, owner spent 1500, note tiles."}
 
 Input: "owner gave 5000 rupees and labor paid is 2000"
-Output: {"labourCount": null, "labourPaid": 2000.0, "ownerAmount": 5000.0, "note": null}
+Output: {"labourCount": null, "labourPaid": 2000.0, "ownerAmount": 5000.0, "note": null, "cleanedTranscript": "Owner gave 5000 rupees and labor paid is 2000."}
+
+Input: "ఈరోజు కూలీలు 5 మంది లీలు 3000 3000 ఓనర్ ఇచ్చింది ఈ పదివేలు ఓనర్ ఇచ్చింది 10000"
+Output: {"labourCount": 5, "labourPaid": 3000.0, "ownerAmount": 10000.0, "note": null, "cleanedTranscript": "ఈరోజు 5 మంది కూలీలకు 3000 ఇచ్చాము, మరియు ఓనర్ 10000 ఇచ్చారు."}
 
 Make sure to convert Telugu spoken numbers to digits (e.g. "ముగ్గురికి" -> 3, "ఐదు వేలు" -> 5000, "వెయ్యి" -> 1000).
 Strictly output ONLY a valid JSON object. Do not include any explanation, markdown blocks, or other text outside the JSON.
@@ -93,6 +97,7 @@ Strictly output ONLY a valid JSON object. Do not include any explanation, markdo
             labourPaid: _parseDouble(parsedJson['labourPaid']),
             ownerAmount: _parseDouble(parsedJson['ownerAmount']),
             note: parsedJson['note']?.toString().trim(),
+            cleanedTranscript: parsedJson['cleanedTranscript']?.toString().trim(),
           );
         } else {
           final errorMsg = _tryParseErrorMessage(response.body);

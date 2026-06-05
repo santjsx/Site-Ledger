@@ -14,7 +14,8 @@ void main() {
               'labourCount': 5,
               'labourPaid': 5000.0,
               'ownerAmount': 1000.0,
-              'note': 'tiles purchased'
+              'note': 'tiles purchased',
+              'cleanedTranscript': '5 workers paid 5000, owner spent 1000, note tiles purchased.'
             })
           }
         }
@@ -36,6 +37,7 @@ void main() {
     expect(entry.labourPaid, 5000.0);
     expect(entry.ownerAmount, 1000.0);
     expect(entry.note, 'tiles purchased');
+    expect(entry.cleanedTranscript, '5 workers paid 5000, owner spent 1000, note tiles purchased.');
   });
 
   test('GroqService parseTranscript handles nulls and strings gracefully', () async {
@@ -47,7 +49,8 @@ void main() {
               'labourCount': '10',
               'labourPaid': '2500.50',
               'ownerAmount': null,
-              'note': '  cement  '
+              'note': '  cement  ',
+              'cleanedTranscript': '10 workers paid 2500.50, note cement.'
             })
           }
         }
@@ -69,6 +72,7 @@ void main() {
     expect(entry.labourPaid, 2500.50);
     expect(entry.ownerAmount, null);
     expect(entry.note, 'cement');
+    expect(entry.cleanedTranscript, '10 workers paid 2500.50, note cement.');
   });
 
   test('GroqService parseTranscript throws exception on API error response', () async {
@@ -102,7 +106,8 @@ void main() {
               'labourCount': 3,
               'labourPaid': 3000.0,
               'ownerAmount': null,
-              'note': 'paint'
+              'note': 'paint',
+              'cleanedTranscript': '3 workers paid 3000, note paint.'
             })
           }
         }
@@ -133,5 +138,6 @@ void main() {
     expect(entry.labourCount, 3);
     expect(entry.labourPaid, 3000.0);
     expect(entry.note, 'paint');
+    expect(entry.cleanedTranscript, '3 workers paid 3000, note paint.');
   });
 }

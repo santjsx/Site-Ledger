@@ -27,12 +27,61 @@ class _VoiceRecordSheetState extends State<VoiceRecordSheet> with SingleTickerPr
   String _localeId = 'te-IN';
   bool _userStopped = false;
 
+  String _mergeTranscripts(String s1, String s2) {
+    s1 = s1.trim();
+    s2 = s2.trim();
+    if (s1.isEmpty) return s2;
+    if (s2.isEmpty) return s1;
+
+    final words1 = s1.split(RegExp(r'\s+'));
+    final words2 = s2.split(RegExp(r'\s+'));
+
+    int maxWordOverlap = 0;
+    int minLen = words1.length < words2.length ? words1.length : words2.length;
+
+    for (int i = 1; i <= minLen; i++) {
+      bool match = true;
+      for (int j = 0; j < i; j++) {
+        final w1 = words1[words1.length - i + j].toLowerCase();
+        final w2 = words2[j].toLowerCase();
+        if (w1 != w2) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        maxWordOverlap = i;
+      }
+    }
+
+    if (maxWordOverlap > 0) {
+      final nonOverlapping = words2.sublist(maxWordOverlap);
+      if (nonOverlapping.isEmpty) {
+        return s1;
+      }
+      return '$s1 ${nonOverlapping.join(' ')}';
+    }
+
+    // Check character-level overlap
+    int maxCharOverlap = 0;
+    int minCharLen = s1.length < s2.length ? s1.length : s2.length;
+    for (int i = 1; i <= minCharLen; i++) {
+      final sub1 = s1.substring(s1.length - i).toLowerCase();
+      final sub2 = s2.substring(0, i).toLowerCase();
+      if (sub1 == sub2) {
+        maxCharOverlap = i;
+      }
+    }
+
+    if (maxCharOverlap >= 3) {
+      return s1 + s2.substring(maxCharOverlap);
+    }
+
+    return '$s1 $s2';
+  }
+
   String get _fullTranscript {
-    final cur = _currentTranscript.trim();
-    final acc = _accumulatedTranscript.trim();
-    if (cur.isEmpty) return acc;
-    if (acc.isEmpty) return cur;
-    return '$acc $cur';
+    return _mergeTranscripts(_accumulatedTranscript, _currentTranscript);
   }
 
   @override
@@ -112,11 +161,8 @@ class _VoiceRecordSheetState extends State<VoiceRecordSheet> with SingleTickerPr
                 _currentTranscript = newText;
               } else {
                 // Case B: The engine returned a new segment/word without accumulation.
-                // We commit the previous segment to accumulated transcript.
-                if (_accumulatedTranscript.isNotEmpty) {
-                  _accumulatedTranscript += ' ';
-                }
-                _accumulatedTranscript += curText;
+                // We commit the previous segment to accumulated transcript with smart overlap merging.
+                _accumulatedTranscript = _mergeTranscripts(_accumulatedTranscript, curText);
                 _currentTranscript = newText;
               }
             });
@@ -158,10 +204,7 @@ class _VoiceRecordSheetState extends State<VoiceRecordSheet> with SingleTickerPr
       setState(() {
         final cur = _currentTranscript.trim();
         if (cur.isNotEmpty) {
-          if (_accumulatedTranscript.isNotEmpty) {
-            _accumulatedTranscript += ' ';
-          }
-          _accumulatedTranscript += cur;
+          _accumulatedTranscript = _mergeTranscripts(_accumulatedTranscript, cur);
           _currentTranscript = '';
         }
         
@@ -298,7 +341,7 @@ class _VoiceRecordSheetState extends State<VoiceRecordSheet> with SingleTickerPr
       builder: (context) {
         return ReviewEntryDialog(
           siteId: widget.siteId,
-          voiceTranscript: text,
+          voiceTranscript: parsed.cleanedTranscript ?? text,
           parsedEntry: parsed,
           initialDate: widget.initialDate,
         );

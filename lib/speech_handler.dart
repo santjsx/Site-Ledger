@@ -6,12 +6,14 @@ class ParsedEntry {
   final double? ownerAmount;
   final double? labourPaid;
   final String? note;
+  final String? cleanedTranscript;
 
   ParsedEntry({
     this.labourCount,
     this.ownerAmount,
     this.labourPaid,
     this.note,
+    this.cleanedTranscript,
   });
 }
 
@@ -285,6 +287,7 @@ class LedgerNlpParser {
       ownerAmount: ownerAmount,
       labourPaid: labourPaid,
       note: note,
+      cleanedTranscript: text,
     );
   }
 }
