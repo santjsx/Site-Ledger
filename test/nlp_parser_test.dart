@@ -26,6 +26,13 @@ void main() {
     expect(entry.note, 'సిమెంట్');
   });
 
+  test('LedgerNlpParser handles sentence from user screenshot correctly', () {
+    final entry = LedgerNlpParser.parse('ఈరోజు కూలీలు ముగ్గురు జీతం 2000 ఓనర్ 5000 ఇచ్చాడు');
+    expect(entry.labourCount, 3);
+    expect(entry.labourPaid, 2000.0);
+    expect(entry.ownerAmount, 5000.0);
+  });
+
   test('LedgerNlpParser handles general text as notes if no metrics match', () {
     final entry = LedgerNlpParser.parse('ఈరోజు ఇసుక వచ్చింది');
     expect(entry.labourCount, null);
