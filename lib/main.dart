@@ -81,6 +81,13 @@ class MyApp extends StatelessWidget {
             ),
           ),
           
+          // SnackBar Theme
+          snackBarTheme: const SnackBarThemeData(
+            backgroundColor: Color(0xFF0F172A),
+            contentTextStyle: TextStyle(color: Colors.white, fontSize: 14),
+            actionTextColor: Color(0xFF00F2FE),
+          ),
+          
           // Input Decoration Theme
           inputDecorationTheme: InputDecorationTheme(
             filled: true,

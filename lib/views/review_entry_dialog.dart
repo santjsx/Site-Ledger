@@ -88,7 +88,10 @@ class _ReviewEntryDialogState extends State<ReviewEntryDialog> {
             children: const [
               Icon(Icons.check_circle_rounded, color: Color(0xFF00F2FE)),
               SizedBox(width: 8),
-              Text('సేవ్ చేసాము!'),
+              Text(
+                'సేవ్ చేసాము!',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           backgroundColor: const Color(0xFF0F172A),

@@ -63,7 +63,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
           children: const [
             Icon(Icons.check_circle_rounded, color: Color(0xFF00F2FE)),
             SizedBox(width: 8),
-            Text('అమరికలు సేవ్ చేయబడ్డాయి! (Settings Saved!)'),
+            Text(
+              'అమరికలు సేవ్ చేయబడ్డాయి! (Settings Saved!)',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         backgroundColor: const Color(0xFF0F172A),
