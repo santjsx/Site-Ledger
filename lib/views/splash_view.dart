@@ -79,24 +79,26 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Glowing Premium Mic Icon
+                      // Glowing Premium App Logo
                       Container(
-                        padding: const EdgeInsets.all(24),
+                        width: 140,
+                        height: 140,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF00F2FE).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF00F2FE).withValues(alpha: 0.15),
+                              color: const Color(0xFF00F2FE).withValues(alpha: 0.2),
                               blurRadius: 40,
-                              spreadRadius: 10,
+                              spreadRadius: 2,
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.mic_none_rounded,
-                          size: 72,
-                          color: Color(0xFF00F2FE), // Glowing cyan
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(32),
+                          child: Image.asset(
+                            'assets/logo.png',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 32),
