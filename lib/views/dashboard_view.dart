@@ -7,9 +7,15 @@ import '../speech_handler.dart';
 import 'ledger_list_view.dart';
 import 'voice_record_sheet.dart';
 import 'settings_dialog.dart';
+import 'sites_dashboard_view.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
+
+  String _formatTeluguDate(DateTime date) {
+    final months = ['జనవరి', 'ఫిబ్రవరి', 'మార్చి', 'ఏప్రిల్', 'మే', 'జూన్', 'జూలై', 'ఆగస్టు', 'సెప్టెంబరు', 'అక్టోబరు', 'నవంబరు', 'డిసెంబరు'];
+    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +116,16 @@ class DashboardView extends StatelessWidget {
                   ),
             actions: [
               IconButton(
+                icon: const Icon(Icons.analytics_rounded, color: Color(0xFF00F2FE)),
+                tooltip: 'అన్ని సైట్ల సమ్మరీ (Sites Dashboard)',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SitesDashboardView()),
+                  );
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF00F2FE)),
                 tooltip: 'సైట్లు మార్చండి / తీసేయండి',
                 onPressed: () => _showManageSitesSheet(context, state),
@@ -144,7 +160,7 @@ class DashboardView extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'సృష్టించబడిన తేదీ: ${DateFormat('dd MMM yyyy').format(activeSite.createdAt)}',
+                                  'సృష్టించబడిన తేదీ: ${_formatTeluguDate(activeSite.createdAt)}',
                                   style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                                 ),
                                 if (state.isAllTime)
@@ -215,7 +231,7 @@ class DashboardView extends StatelessWidget {
                           // Notes & Activity Count Card
                           _buildFullWidthCard(
                             title: 'సైట్ రికార్డులు & గమనికలు',
-                            value: '${state.activeSiteEntriesFiltered.length} రికార్డులు నమోదయ్యాయి',
+                            value: '${state.activeSiteEntries.length} రికార్డులు | ${state.activeSiteDaysWorked} రోజులు పని జరిగింది',
                             icon: Icons.description_outlined,
                             color: const Color(0xFFEC4899), // Pink
                             onTap: () {
@@ -853,7 +869,7 @@ class DashboardView extends StatelessWidget {
   }
 
   Widget _buildDateNavigationBanner(BuildContext context, AppState state) {
-    final dateStr = DateFormat('dd MMM yyyy').format(state.selectedDate);
+    final dateStr = _formatTeluguDate(state.selectedDate);
     final isToday = DateUtils.isSameDay(state.selectedDate, DateTime.now());
 
     return Container(

@@ -19,7 +19,7 @@ class ParsedEntry {
 
 class LedgerNlpParser {
   static String _normalizeNumbers(String text) {
-    var result = text.toLowerCase();
+    var result = text.toLowerCase().replaceAll(',', '');
 
     // Map of Telugu word numbers to digits
     final Map<String, String> wordToDigit = {

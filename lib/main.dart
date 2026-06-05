@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'app_state.dart';
 import 'views/splash_view.dart';
@@ -18,6 +19,17 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Site Voice Ledger',
         debugShowCheckedModeBanner: false,
+        
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('te', 'IN'),
+          Locale('en', 'IN'),
+        ],
+        locale: const Locale('te', 'IN'),
         
         // Gorgeous premium dark theme setup
         theme: ThemeData(

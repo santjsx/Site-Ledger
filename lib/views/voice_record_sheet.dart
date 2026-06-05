@@ -150,21 +150,7 @@ class _VoiceRecordSheetState extends State<VoiceRecordSheet> with SingleTickerPr
         onResult: (text) {
           if (mounted) {
             setState(() {
-              final newText = text.trim();
-              if (newText.isEmpty) return;
-              
-              final curText = _currentTranscript.trim();
-              if (curText.isEmpty) {
-                _currentTranscript = newText;
-              } else if (newText.toLowerCase().startsWith(curText.toLowerCase())) {
-                // Case A: The engine is accumulating words in the current session
-                _currentTranscript = newText;
-              } else {
-                // Case B: The engine returned a new segment/word without accumulation.
-                // We commit the previous segment to accumulated transcript with smart overlap merging.
-                _accumulatedTranscript = _mergeTranscripts(_accumulatedTranscript, curText);
-                _currentTranscript = newText;
-              }
+              _currentTranscript = text;
             });
           }
         },
@@ -179,13 +165,6 @@ class _VoiceRecordSheetState extends State<VoiceRecordSheet> with SingleTickerPr
         });
       }
     }
-  }
-
-  Future<void> _stopRecording() async {
-    setState(() {
-      _userStopped = true;
-    });
-    await _speechHandler.stopListening();
   }
 
   Future<void> _stopAndProcess() async {

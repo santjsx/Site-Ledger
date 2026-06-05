@@ -110,7 +110,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                 ),
                 value: _useAiParsing,
-                activeColor: const Color(0xFF00F2FE),
+                activeThumbColor: const Color(0xFF00F2FE),
                 activeTrackColor: const Color(0xFF00F2FE).withValues(alpha: 0.2),
                 inactiveThumbColor: const Color(0xFF64748B),
                 inactiveTrackColor: Colors.white10,
@@ -231,7 +231,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   canvasColor: const Color(0xFF0F172A),
                 ),
                 child: DropdownButtonFormField<String>(
-                  value: _selectedModel,
+                  initialValue: _selectedModel,
                   disabledHint: Text(
                     _selectedModel,
                     style: const TextStyle(color: Color(0xFF475569), fontSize: 14),

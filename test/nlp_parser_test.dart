@@ -59,4 +59,13 @@ void main() {
     final entry3 = LedgerNlpParser.parse('ఓనర్ అడ్వాన్స్ రెండు వేలు పంపించారు');
     expect(entry3.ownerAmount, 2000.0);
   });
+
+  test('LedgerNlpParser parses numbers with commas correctly', () {
+    final entry1 = LedgerNlpParser.parse('owner gave 10,000');
+    expect(entry1.ownerAmount, 10000.0);
+
+    final entry2 = LedgerNlpParser.parse('కూలీల జీతం 3,000 ఓనర్ 10,000 ఇచ్చాడు');
+    expect(entry2.labourPaid, 3000.0);
+    expect(entry2.ownerAmount, 10000.0);
+  });
 }

@@ -148,6 +148,14 @@ class AppState extends ChangeNotifier {
     return activeSiteEntriesFiltered.where((e) => e.note != null && e.note!.isNotEmpty).length;
   }
 
+  int get activeSiteDaysWorked {
+    final entries = activeSiteEntries;
+    final uniqueDays = entries.map((e) {
+      return '${e.timestamp.year}-${e.timestamp.month}-${e.timestamp.day}';
+    }).toSet();
+    return uniqueDays.length;
+  }
+
   AppState() {
     loadData();
   }

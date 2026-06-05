@@ -15,6 +15,12 @@ class _LedgerListViewState extends State<LedgerListView> {
   String _searchQuery = '';
   String _selectedFilter = 'All'; // 'All', 'Labor', 'Financial', 'Notes'
 
+  String _formatTeluguDateTime(DateTime date) {
+    final months = ['జనవరి', 'ఫిబ్రవరి', 'మార్చి', 'ఏప్రిల్', 'మే', 'జూన్', 'జూలై', 'ఆగస్టు', 'సెప్టెంబరు', 'అక్టోబరు', 'నవంబరు', 'డిసెంబరు'];
+    final timeStr = DateFormat('hh:mm a').format(date);
+    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}, $timeStr';
+  }
+
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
@@ -280,7 +286,7 @@ class _LedgerListViewState extends State<LedgerListView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    DateFormat('dd MMM yyyy, hh:mm a').format(entry.timestamp),
+                    _formatTeluguDateTime(entry.timestamp),
                     style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                   InkWell(
