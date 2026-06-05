@@ -7,6 +7,10 @@ class ParsedEntry {
   final double? labourPaid;
   final String? note;
   final String? cleanedTranscript;
+  final int? magaLabourCount;
+  final double? magaLabourPaid;
+  final int? aadaLabourCount;
+  final double? aadaLabourPaid;
 
   ParsedEntry({
     this.labourCount,
@@ -14,6 +18,10 @@ class ParsedEntry {
     this.labourPaid,
     this.note,
     this.cleanedTranscript,
+    this.magaLabourCount,
+    this.magaLabourPaid,
+    this.aadaLabourCount,
+    this.aadaLabourPaid,
   });
 }
 
@@ -190,9 +198,110 @@ class LedgerNlpParser {
     return result;
   }
 
+  static int _findFirstKeywordIndex(String text, List<String> keywords) {
+    int firstIdx = -1;
+    for (var kw in keywords) {
+      final idx = text.indexOf(kw);
+      if (idx != -1) {
+        if (firstIdx == -1 || idx < firstIdx) {
+          firstIdx = idx;
+        }
+      }
+    }
+    return firstIdx;
+  }
+
+  static Map<String, dynamic> _parseGenderPart(String partText, bool isMale) {
+    final lowerText = partText.toLowerCase();
+    int? count;
+    double? paid;
+
+    // 1. Try to parse Count using explicit count keywords
+    final countRegExs = [
+      RegExp(r'(?:కూలీల\s*సంఖ్య|కూలీలు|లేబర్|కార్మికులు|labour|labor|workers|count)\s*[:\s\-]*\s*(\d+)'),
+      RegExp(r'(\d+)\s*(?:కూలీలు|లేబర్|కార్మికులు|labour|labor|workers|మంది|మనుషులు)'),
+    ];
+
+    for (var reg in countRegExs) {
+      final match = reg.firstMatch(lowerText);
+      if (match != null) {
+        final val = int.tryParse(match.group(1) ?? '');
+        if (val != null && val < 150) {
+          count = val;
+          break;
+        }
+      }
+    }
+
+    // 2. Try to parse Paid using explicit payment keywords
+    final paidRegExs = [
+      RegExp(r'(?:కూలి|జీతం|జీతాలు|పేమెంట్|డబ్బులు|paid|payment|wages|salary)\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
+      RegExp(r'(\d+(?:\.\d+)?)\s*(?:ఇచ్చాము|చెల్లించాము|జీతం|కూలి|డబ్బులు|చెల్లింపు|పేమెంట్|ఇచ్చారు)'),
+    ];
+
+    for (var reg in paidRegExs) {
+      final match = reg.firstMatch(lowerText);
+      if (match != null) {
+        paid = double.tryParse(match.group(1) ?? '');
+        if (paid != null) break;
+      }
+    }
+
+    // 3. Fallbacks when keywords are missing but numbers are present
+    final numRegex = RegExp(r'(\d+(?:\.\d+)?)');
+    final matches = numRegex.allMatches(lowerText).toList();
+
+    if (matches.isNotEmpty) {
+      if (count == null && paid == null) {
+        if (matches.length == 1) {
+          final val = double.tryParse(matches[0].group(1) ?? '') ?? 0.0;
+          if (val < 150) {
+            count = val.toInt();
+          } else {
+            paid = val;
+          }
+        } else if (matches.length >= 2) {
+          final val1 = double.tryParse(matches[0].group(1) ?? '') ?? 0.0;
+          final val2 = double.tryParse(matches[1].group(1) ?? '') ?? 0.0;
+          if (val1 < 150) {
+            count = val1.toInt();
+            paid = val2;
+          } else {
+            paid = val1;
+          }
+        }
+      } else if (count == null && paid != null) {
+        for (var m in matches) {
+          final val = double.tryParse(m.group(1) ?? '') ?? 0.0;
+          if (val != paid && val < 150) {
+            count = val.toInt();
+            break;
+          }
+        }
+      } else if (count != null && paid == null) {
+        for (var m in matches) {
+          final val = double.tryParse(m.group(1) ?? '') ?? 0.0;
+          if (val.toInt() != count) {
+            paid = val;
+            break;
+          }
+        }
+      }
+    }
+
+    return {
+      'count': count,
+      'paid': paid,
+    };
+  }
+
   static ParsedEntry parse(String text) {
     // Preprocess text by normalizing Telugu and English spoken numbers to digits
-    final normalizedText = _normalizeNumbers(text);
+    final subjectNormalizeRegex = RegExp(r'\b([1-9]\d{0,2})\s*(మగ|maga|male|ఆడ|aada|female)\b');
+    var normalizedText = _normalizeNumbers(text);
+    normalizedText = normalizedText.replaceAllMapped(subjectNormalizeRegex, (match) {
+      return '${match.group(2)} ${match.group(1)}';
+    });
     final lowerText = normalizedText.toLowerCase();
     
     int? labourCount;
@@ -200,23 +309,53 @@ class LedgerNlpParser {
     double? labourPaid;
     String? note;
 
-    // 1. Parse Labour Count
-    final labourCountRegExs = [
-      RegExp(r'(?:labour|labor)\s+count\s*[:\s\-]*\s*(\d+)'),
-      RegExp(r'(?:కార్మికులు|కార్మికుల\s+సంఖ్య|లేబర్|లేబర్\s+కౌంట్|కూలీలు|కూలీల\s+సంఖ్య)\s*[:\s\-]*\s*(\d+)'),
-      RegExp(r'(\d+)\s*(?:worker|labor|labour|people|మంది|మనుషులు)s?'),
-      RegExp(r'count\s*[:\s\-]*\s*(\d+)'),
-    ];
+    // 1. Split text into male and female clauses
+    int femaleIndex = _findFirstKeywordIndex(lowerText, ['ఆడ', 'aada', 'female']);
+    int maleIndex = _findFirstKeywordIndex(lowerText, ['మగ', 'maga', 'male']);
 
-    for (var reg in labourCountRegExs) {
-      final match = reg.firstMatch(lowerText);
-      if (match != null) {
-        labourCount = int.tryParse(match.group(1) ?? '');
-        if (labourCount != null) break;
+    String malePart = '';
+    String femalePart = '';
+
+    if (femaleIndex != -1 && maleIndex != -1) {
+      if (maleIndex < femaleIndex) {
+        malePart = lowerText.substring(0, femaleIndex);
+        femalePart = lowerText.substring(femaleIndex);
+      } else {
+        femalePart = lowerText.substring(0, maleIndex);
+        malePart = lowerText.substring(maleIndex);
       }
+    } else if (maleIndex != -1) {
+      malePart = lowerText;
+    } else if (femaleIndex != -1) {
+      femalePart = lowerText;
     }
 
-    // 2. Parse Money Given by Owner (Owner Advance/Cash Inflow)
+    int? magaLabourCount;
+    double? magaLabourPaid;
+    int? aadaLabourCount;
+    double? aadaLabourPaid;
+
+    if (malePart.isNotEmpty) {
+      final res = _parseGenderPart(malePart, true);
+      magaLabourCount = res['count'];
+      magaLabourPaid = res['paid'];
+    }
+
+    if (femalePart.isNotEmpty) {
+      final res = _parseGenderPart(femalePart, false);
+      aadaLabourCount = res['count'];
+      aadaLabourPaid = res['paid'];
+    }
+
+    // If split details are present, auto-calculate totals
+    if (magaLabourCount != null || aadaLabourCount != null) {
+      labourCount = (magaLabourCount ?? 0) + (aadaLabourCount ?? 0);
+    }
+    if (magaLabourPaid != null || aadaLabourPaid != null) {
+      labourPaid = (magaLabourPaid ?? 0.0) + (aadaLabourPaid ?? 0.0);
+    }
+
+    // 2. Parse Owner Amount
     final ownerRegExs = [
       RegExp(r'owner\s*(?:gave|sent|received|advance|spent|amount)?\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
       RegExp(r'(?:యజమాని|ఓనర్)\s*(?:ఇచ్చినవి|పంపినవి|అడ్వాన్స్|ఇచ్చారు|ఇచ్చిన|ఖర్చు|మొత్తం|అమౌంట్)?\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
@@ -234,22 +373,41 @@ class LedgerNlpParser {
       }
     }
 
-    // 3. Parse Labour Paid
-    final labourPaidRegExs = [
-      RegExp(r'(?:labour|labor)\s+paid\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
-      RegExp(r'(?:కార్మికులకు\s+చెల్లించిన\s+మొత్తం|చెల్లింపులు|కార్మికుల\s+జీతం|జీతాలు|జీతం|లేబర్\s+పేమెంట్|కూలీల\s+ఖర్చు|కూలీల\s+డబ్బులు|కూలి|కూలి\s+డబ్బులు|కూలీలకు)\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
-      RegExp(r'paid\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
-      RegExp(r'(\d+(?:\.\d+)?)\s*(?:labor|labour|లేబర్)?\s*paid'),
-      RegExp(r'(\d+(?:\.\d+)?)\s*(?:చెల్లించాము|ఇచ్చాము|జీతం|చెల్లింపు|డబ్బులు|కూలి|కూలీలకు|కూలి\s*డబ్బులు)'),
-    ];
+    // 3. Fallbacks for total count/paid if split values are not present
+    if (magaLabourCount == null && aadaLabourCount == null) {
+      final labourCountRegExs = [
+        RegExp(r'(?:labour|labor)\s+count\s*[:\s\-]*\s*(\d+)'),
+        RegExp(r'(?:కార్మికులు|కార్మికుల\s+సంఖ్య|లేబర్|లేబర్\s+కౌంట్|కూలీలు|కూలీల\s+సంఖ్య)\s*[:\s\-]*\s*(\d+)'),
+        RegExp(r'(\d+)\s*(?:worker|labor|labour|people|మంది|మనుషులు)s?'),
+        RegExp(r'count\s*[:\s\-]*\s*(\d+)'),
+      ];
 
-    for (var reg in labourPaidRegExs) {
-      final match = reg.firstMatch(lowerText);
-      if (match != null) {
-        final val = double.tryParse(match.group(1) ?? '');
-        if (val != null) {
-          labourPaid = val;
-          break;
+      for (var reg in labourCountRegExs) {
+        final match = reg.firstMatch(lowerText);
+        if (match != null) {
+          labourCount = int.tryParse(match.group(1) ?? '');
+          if (labourCount != null) break;
+        }
+      }
+    }
+
+    if (magaLabourPaid == null && aadaLabourPaid == null) {
+      final labourPaidRegExs = [
+        RegExp(r'(?:labour|labor)\s+paid\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
+        RegExp(r'(?:కార్మికులకు\s+చెల్లించిన\s+మొత్తం|చెల్లింపులు|కార్మికుల\s+జీతం|జీతాలు|జీతం|లేబర్\s+పేమెంట్|కూలీల\s+ఖర్చు|కూలీల\s+డబ్బులు|కూలి|కూలి\s+డబ్బులు|కూలీలకు)\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
+        RegExp(r'paid\s*[:\s\-]*\s*(\d+(?:\.\d+)?)'),
+        RegExp(r'(\d+(?:\.\d+)?)\s*(?:labor|labour|లేబర్)?\s*paid'),
+        RegExp(r'(\d+(?:\.\d+)?)\s*(?:చెల్లించాము|ఇచ్చాము|జీతం|చెల్లింపు|డబ్బులు|కూలి|కూలీలకు|కూలి\s*డబ్బులు)'),
+      ];
+
+      for (var reg in labourPaidRegExs) {
+        final match = reg.firstMatch(lowerText);
+        if (match != null) {
+          final val = double.tryParse(match.group(1) ?? '');
+          if (val != null) {
+            labourPaid = val;
+            break;
+          }
         }
       }
     }
@@ -273,7 +431,8 @@ class LedgerNlpParser {
         'cost', 'wages', 'cash', 'rupees', 'rs',
         'కార్మికులు', 'కార్మికుల', 'లేబర్', 'కూలీలు', 'కూలీల', 'మంది', 'మనుషులు',
         'జీతం', 'జీతాలు', 'డబ్బులు', 'కూలి', 'కూలీలకు', 'పేమెంట్', 'చెల్లించాము', 'ఇచ్చాము', 'ఇచ్చారు',
-        'యజమాని', 'ఓనర్', 'ఖర్చు', 'మొత్తం', 'అమౌంట్', 'ఇచ్చిన', 'ఇచ్చినవి', 'పంపినవి', 'అడ్వాన్స్', 'రూపాయలు'
+        'యజమాని', 'ఓనర్', 'ఖర్చు', 'మొత్తం', 'అమౌంట్', 'ఇచ్చిన', 'ఇచ్చినవి', 'పంపినవి', 'అడ్వాన్స్', 'రూపాయలు',
+        'మగ', 'మగాళ్ళు', 'మగవాళ్ళు', 'ఆడ', 'ఆడవాళ్ళు', 'maga', 'aada'
       ];
       final lower = text.toLowerCase();
       bool hasLedgerKeywords = ledgerKeywords.any((keyword) => lower.contains(keyword));
@@ -288,6 +447,10 @@ class LedgerNlpParser {
       labourPaid: labourPaid,
       note: note,
       cleanedTranscript: text,
+      magaLabourCount: magaLabourCount,
+      magaLabourPaid: magaLabourPaid,
+      aadaLabourCount: aadaLabourCount,
+      aadaLabourPaid: aadaLabourPaid,
     );
   }
 }

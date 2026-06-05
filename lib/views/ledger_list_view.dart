@@ -319,6 +319,18 @@ class _LedgerListViewState extends State<LedgerListView> {
                       color: const Color(0xFF00F2FE),
                       label: '${entry.labourCount} మంది కూలీలు',
                     ),
+                  if (entry.magaLabourCount != null && entry.magaLabourCount! > 0)
+                    _buildMetricBadge(
+                      icon: Icons.male_rounded,
+                      color: const Color(0xFF3B82F6),
+                      label: 'మగ: ${entry.magaLabourCount} మంది${entry.magaLabourPaid != null && entry.magaLabourPaid! > 0 ? ' (${formatter.format(entry.magaLabourPaid)})' : ''}',
+                    ),
+                  if (entry.aadaLabourCount != null && entry.aadaLabourCount! > 0)
+                    _buildMetricBadge(
+                      icon: Icons.female_rounded,
+                      color: const Color(0xFFEC4899),
+                      label: 'ఆడ: ${entry.aadaLabourCount} మంది${entry.aadaLabourPaid != null && entry.aadaLabourPaid! > 0 ? ' (${formatter.format(entry.aadaLabourPaid)})' : ''}',
+                    ),
                   if (hasLabourPaid)
                     _buildMetricBadge(
                       icon: Icons.payments_rounded,
@@ -433,7 +445,7 @@ class _LedgerListViewState extends State<LedgerListView> {
 
     final buffer = StringBuffer();
     // CSV Header
-    buffer.writeln('Timestamp,Transcript,Labour Count,Labour Paid (INR),Owner Money Received (INR),Notes');
+    buffer.writeln('Timestamp,Transcript,Labour Count,Labour Paid (INR),Maga Labour Count,Maga Labour Paid (INR),Aada Labour Count,Aada Labour Paid (INR),Owner Money Received (INR),Notes');
 
     for (var entry in entries) {
       final timeStr = DateFormat('yyyy-MM-dd HH:mm:ss').format(entry.timestamp);
@@ -441,7 +453,7 @@ class _LedgerListViewState extends State<LedgerListView> {
       final cleanNote = (entry.note ?? '').replaceAll('"', '""');
 
       buffer.writeln(
-        '$timeStr,"$cleanTranscript",${entry.labourCount ?? 0},${entry.labourPaid ?? 0.0},${entry.ownerAmount ?? 0.0},"$cleanNote"',
+        '$timeStr,"$cleanTranscript",${entry.labourCount ?? 0},${entry.labourPaid ?? 0.0},${entry.magaLabourCount ?? 0},${entry.magaLabourPaid ?? 0.0},${entry.aadaLabourCount ?? 0},${entry.aadaLabourPaid ?? 0.0},${entry.ownerAmount ?? 0.0},"$cleanNote"',
       );
     }
 

@@ -30,6 +30,11 @@ class _ReviewEntryDialogState extends State<ReviewEntryDialog> {
   late TextEditingController _noteController;
   late DateTime _entryDate;
 
+  late TextEditingController _magaLabourCountController;
+  late TextEditingController _magaLabourPaidController;
+  late TextEditingController _aadaLabourCountController;
+  late TextEditingController _aadaLabourPaidController;
+
   @override
   void initState() {
     super.initState();
@@ -48,14 +53,56 @@ class _ReviewEntryDialogState extends State<ReviewEntryDialog> {
     _noteController = TextEditingController(
       text: widget.parsedEntry.note ?? '',
     );
+
+    _magaLabourCountController = TextEditingController(
+      text: widget.parsedEntry.magaLabourCount?.toString() ?? '',
+    );
+    _magaLabourPaidController = TextEditingController(
+      text: widget.parsedEntry.magaLabourPaid?.toString() ?? '',
+    );
+    _aadaLabourCountController = TextEditingController(
+      text: widget.parsedEntry.aadaLabourCount?.toString() ?? '',
+    );
+    _aadaLabourPaidController = TextEditingController(
+      text: widget.parsedEntry.aadaLabourPaid?.toString() ?? '',
+    );
+
+    // Add listeners to auto-sum splits into total count and paid
+    _magaLabourCountController.addListener(_updateTotals);
+    _aadaLabourCountController.addListener(_updateTotals);
+    _magaLabourPaidController.addListener(_updateTotals);
+    _aadaLabourPaidController.addListener(_updateTotals);
+  }
+
+  void _updateTotals() {
+    final int magaCount = int.tryParse(_magaLabourCountController.text) ?? 0;
+    final int aadaCount = int.tryParse(_aadaLabourCountController.text) ?? 0;
+    if (magaCount > 0 || aadaCount > 0) {
+      _labourCountController.text = (magaCount + aadaCount).toString();
+    }
+
+    final double magaPaid = double.tryParse(_magaLabourPaidController.text) ?? 0.0;
+    final double aadaPaid = double.tryParse(_aadaLabourPaidController.text) ?? 0.0;
+    if (magaPaid > 0.0 || aadaPaid > 0.0) {
+      _labourPaidController.text = (magaPaid + aadaPaid).toString();
+    }
   }
 
   @override
   void dispose() {
+    _magaLabourCountController.removeListener(_updateTotals);
+    _aadaLabourCountController.removeListener(_updateTotals);
+    _magaLabourPaidController.removeListener(_updateTotals);
+    _aadaLabourPaidController.removeListener(_updateTotals);
+
     _labourCountController.dispose();
     _labourPaidController.dispose();
     _ownerAmountController.dispose();
     _noteController.dispose();
+    _magaLabourCountController.dispose();
+    _magaLabourPaidController.dispose();
+    _aadaLabourCountController.dispose();
+    _aadaLabourPaidController.dispose();
     super.dispose();
   }
 
@@ -68,6 +115,11 @@ class _ReviewEntryDialogState extends State<ReviewEntryDialog> {
       final double? ownerAmount = double.tryParse(_ownerAmountController.text);
       final String note = _noteController.text.trim();
 
+      final int? magaLabourCount = int.tryParse(_magaLabourCountController.text);
+      final double? magaLabourPaid = double.tryParse(_magaLabourPaidController.text);
+      final int? aadaLabourCount = int.tryParse(_aadaLabourCountController.text);
+      final double? aadaLabourPaid = double.tryParse(_aadaLabourPaidController.text);
+
       final newEntry = LedgerEntry(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         siteId: widget.siteId,
@@ -77,6 +129,10 @@ class _ReviewEntryDialogState extends State<ReviewEntryDialog> {
         labourPaid: labourPaid,
         ownerAmount: ownerAmount,
         note: note.isNotEmpty ? note : null,
+        magaLabourCount: magaLabourCount,
+        magaLabourPaid: magaLabourPaid,
+        aadaLabourCount: aadaLabourCount,
+        aadaLabourPaid: aadaLabourPaid,
       );
 
       state.addEntry(newEntry);
@@ -167,6 +223,99 @@ class _ReviewEntryDialogState extends State<ReviewEntryDialog> {
                 // Date Picker Field
                 _buildDatePickerField(context),
                 const SizedBox(height: 16),
+
+                // Male / Female Splits Section
+                const Text(
+                  'కూలీల విభజన (Workers Split)',
+                  style: TextStyle(color: Color(0xFF00F2FE), fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                
+                // Maga (Male) row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFormField(
+                        controller: _magaLabourCountController,
+                        label: 'మగ కూలీల సంఖ్య',
+                        hint: 'మగ కూలీలు',
+                        icon: Icons.male_rounded,
+                        keyboardType: TextInputType.number,
+                        validator: (val) {
+                          if (val != null && val.isNotEmpty && int.tryParse(val) == null) {
+                            return 'నెంబర్ రాయండి';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildFormField(
+                        controller: _magaLabourPaidController,
+                        label: 'మగ కూలీల జీతం',
+                        hint: 'అమౌంట్',
+                        icon: Icons.payments_rounded,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        prefixText: '₹ ',
+                        validator: (val) {
+                          if (val != null && val.isNotEmpty && double.tryParse(val) == null) {
+                            return 'అమౌంట్ రాయండి';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Aada (Female) row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFormField(
+                        controller: _aadaLabourCountController,
+                        label: 'ఆడ కూలీల సంఖ్య',
+                        hint: 'ఆడ కూలీలు',
+                        icon: Icons.female_rounded,
+                        keyboardType: TextInputType.number,
+                        validator: (val) {
+                          if (val != null && val.isNotEmpty && int.tryParse(val) == null) {
+                            return 'నెంబర్ రాయండి';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildFormField(
+                        controller: _aadaLabourPaidController,
+                        label: 'ఆడ కూలీల జీతం',
+                        hint: 'అమౌంట్',
+                        icon: Icons.payments_rounded,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        prefixText: '₹ ',
+                        validator: (val) {
+                          if (val != null && val.isNotEmpty && double.tryParse(val) == null) {
+                            return 'అమౌంట్ రాయండి';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 12),
+
+                const Text(
+                  'మొత్తం లెక్కలు (Total Summary)',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
 
                 // Form Fields
                 _buildFormField(

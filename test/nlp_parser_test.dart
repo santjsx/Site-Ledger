@@ -68,4 +68,36 @@ void main() {
     expect(entry2.labourPaid, 3000.0);
     expect(entry2.ownerAmount, 10000.0);
   });
+
+  test('LedgerNlpParser parses male/female counts and payments correctly', () {
+    final entry = LedgerNlpParser.parse(
+      'మగ కూలీలు ఐదుగురు వాళ్లకి ఐదు వేలు ఇచ్చాము ఆడ కూలీలు నలుగురు వాళ్లకి మూడు వేల ఆరు వందలు ఇచ్చాము'
+    );
+    expect(entry.magaLabourCount, 5);
+    expect(entry.magaLabourPaid, 5000.0);
+    expect(entry.aadaLabourCount, 4);
+    expect(entry.aadaLabourPaid, 3600.0);
+    // Auto-calculated totals
+    expect(entry.labourCount, 9);
+    expect(entry.labourPaid, 8600.0);
+  });
+
+  test('LedgerNlpParser parses mixed language male/female splits correctly', () {
+    final entry = LedgerNlpParser.parse(
+      'maga workers 3, paid 2500, aada workers 2, paid 1500'
+    );
+    expect(entry.magaLabourCount, 3);
+    expect(entry.magaLabourPaid, 2500.0);
+    expect(entry.aadaLabourCount, 2);
+    expect(entry.aadaLabourPaid, 1500.0);
+    expect(entry.labourCount, 5);
+    expect(entry.labourPaid, 4000.0);
+  });
+
+  test('LedgerNlpParser parses short form maga/aada counts correctly', () {
+    final entry = LedgerNlpParser.parse('మగ 4 ఆడ 3');
+    expect(entry.magaLabourCount, 4);
+    expect(entry.aadaLabourCount, 3);
+    expect(entry.labourCount, 7);
+  });
 }

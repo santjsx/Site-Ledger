@@ -198,6 +198,21 @@ class DashboardView extends StatelessWidget {
                                 icon: Icons.people_outline_rounded,
                                 color: const Color(0xFF00F2FE), // Cyan
                                 subtitle: 'నమోదైన కార్మికులు',
+                                extraDetails: Row(
+                                  children: [
+                                    const Icon(Icons.male_rounded, color: Color(0xFF3B82F6), size: 10),
+                                    Text(
+                                      ' ${state.activeMagaLabourCount}',
+                                      style: const TextStyle(color: Color(0xFF3B82F6), fontSize: 9, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(Icons.female_rounded, color: Color(0xFFEC4899), size: 10),
+                                    Text(
+                                      ' ${state.activeAadaLabourCount}',
+                                      style: const TextStyle(color: Color(0xFFEC4899), fontSize: 9, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
                               ),
                               _buildKpiCard(
                                 title: 'కార్మికులకు చెల్లింపులు',
@@ -205,6 +220,21 @@ class DashboardView extends StatelessWidget {
                                 icon: Icons.payments_outlined,
                                 color: const Color(0xFF10B981), // Emerald
                                 subtitle: 'చేల్లించిన నగదు', // Typo fix or keep Telugu
+                                extraDetails: Row(
+                                  children: [
+                                    const Icon(Icons.male_rounded, color: Color(0xFF3B82F6), size: 10),
+                                    Text(
+                                      ' ${formatter.format(state.activeMagaLabourPaid)}',
+                                      style: const TextStyle(color: Color(0xFF3B82F6), fontSize: 9, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(Icons.female_rounded, color: Color(0xFFEC4899), size: 10),
+                                    Text(
+                                      ' ${formatter.format(state.activeAadaLabourPaid)}',
+                                      style: const TextStyle(color: Color(0xFFEC4899), fontSize: 9, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
                               ),
                               _buildKpiCard(
                                 title: 'ఓనర్ ఇచ్చిన పైసలు',
@@ -351,6 +381,7 @@ class DashboardView extends StatelessWidget {
     required IconData icon,
     required Color color,
     required String subtitle,
+    Widget? extraDetails,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -399,6 +430,10 @@ class DashboardView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
+              if (extraDetails != null) ...[
+                extraDetails,
+                const SizedBox(height: 2),
+              ],
               Text(
                 subtitle,
                 style: const TextStyle(

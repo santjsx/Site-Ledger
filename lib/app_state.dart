@@ -45,6 +45,10 @@ class LedgerEntry {
   final double? ownerAmount;
   final double? labourPaid;
   final String? note;
+  final int? magaLabourCount;
+  final double? magaLabourPaid;
+  final int? aadaLabourCount;
+  final double? aadaLabourPaid;
 
   LedgerEntry({
     required this.id,
@@ -55,6 +59,10 @@ class LedgerEntry {
     this.ownerAmount,
     this.labourPaid,
     this.note,
+    this.magaLabourCount,
+    this.magaLabourPaid,
+    this.aadaLabourCount,
+    this.aadaLabourPaid,
   });
 
   Map<String, dynamic> toJson() => {
@@ -66,6 +74,10 @@ class LedgerEntry {
         'ownerAmount': ownerAmount,
         'labourPaid': labourPaid,
         'note': note,
+        'magaLabourCount': magaLabourCount,
+        'magaLabourPaid': magaLabourPaid,
+        'aadaLabourCount': aadaLabourCount,
+        'aadaLabourPaid': aadaLabourPaid,
       };
 
   factory LedgerEntry.fromJson(Map<String, dynamic> json) => LedgerEntry(
@@ -77,6 +89,10 @@ class LedgerEntry {
         ownerAmount: (json['ownerAmount'] as num?)?.toDouble(),
         labourPaid: (json['labourPaid'] as num?)?.toDouble(),
         note: json['note'],
+        magaLabourCount: json['magaLabourCount'],
+        magaLabourPaid: (json['magaLabourPaid'] as num?)?.toDouble(),
+        aadaLabourCount: json['aadaLabourCount'],
+        aadaLabourPaid: (json['aadaLabourPaid'] as num?)?.toDouble(),
       );
 }
 
@@ -142,6 +158,22 @@ class AppState extends ChangeNotifier {
 
   double get activeLabourPaid {
     return activeSiteEntriesFiltered.fold(0.0, (sum, item) => sum + (item.labourPaid ?? 0.0));
+  }
+
+  int get activeMagaLabourCount {
+    return activeSiteEntriesFiltered.fold(0, (sum, item) => sum + (item.magaLabourCount ?? 0));
+  }
+
+  double get activeMagaLabourPaid {
+    return activeSiteEntriesFiltered.fold(0.0, (sum, item) => sum + (item.magaLabourPaid ?? 0.0));
+  }
+
+  int get activeAadaLabourCount {
+    return activeSiteEntriesFiltered.fold(0, (sum, item) => sum + (item.aadaLabourCount ?? 0));
+  }
+
+  double get activeAadaLabourPaid {
+    return activeSiteEntriesFiltered.fold(0.0, (sum, item) => sum + (item.aadaLabourPaid ?? 0.0));
   }
 
   int get activeNotesCount {
